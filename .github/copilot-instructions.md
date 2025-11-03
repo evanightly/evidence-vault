@@ -40,6 +40,7 @@ This application is a Laravel application and its main Laravel ecosystems packag
 - Action Pattern Design
 
 ## Business Process Understanding (Important)
+important: Use Indonesian language for creating user interface text (labels, buttons, messages, etc).
 
 1. The main business of this project is to upload 2 kind of files into google drive (digital and media social)
 2. After login, the dashboard should show the summary of uploaded files
@@ -48,26 +49,26 @@ This application is a Laravel application and its main Laravel ecosystems packag
 5. The existing codebase is copied from another project that has almost the same business process, its already integrated with google drive
 6. When uploading files, there should be a progress indicator
 7. After uploading files, the link to google drive folder should be shown in a centered popup
-8. The folder structure in google drive should follow the structure below 
+8. The folder structure in google drive should follow the structure below
 
-~/RRI/Evidence/[Nama Karyawan]/Eka/Digital/[Nama Bulan + Tahun]/files
-~/RRI/Evidence/[Nama Karyawan]/Eka/Medsos/[Nama Bulan + Tahun]/files
+~/RRI/Evidence/[Nama Karyawan]/Eka/Digital/[Nama Bulan + Tahun]
+~/RRI/Evidence/[Nama Karyawan]/Eka/Medsos/[Nama Bulan + Tahun]
 
 - RRI
-	- Evidence
-		- [Nama Karyawan]
-		- Eka
-			- Digital
-				- [Nama Bulan + Tahun]
-				- Desember 2025
-			- Medsos
-				- [Nama Bulan + Tahun]
-				- Desember 2025
+    - Evidence
+        - [Nama Karyawan]
+        - Eka
+            - Digital
+                - [Nama Bulan + Tahun]
+                - Desember 2025
+            - Medsos
+                - [Nama Bulan + Tahun]
+                - Desember 2025
 - Link Tautan ditaruh pake centered popup, contoh:
-	- Tautan Bukti Digital Desember 2025
-		- https//:drive.com/oijo21jeo21jas
-	- Tautan Bukti Medsos Desember 2025
-		- https//:drive.com/oijo21jeo21jas
+    - Tautan Bukti Digital Desember 2025
+        - https//:drive.com/oijo21jeo21jas
+    - Tautan Bukti Medsos Desember 2025
+        - https//:drive.com/oijo21jeo21jas
 
 ## Dev note
 
@@ -343,7 +344,7 @@ Route::get('/users', function () {
   it('returns all', function () {
   $response = $this->postJson('/api/docs', []);
 
-                                              $response->assertSuccessful();
+                                                $response->assertSuccessful();
 
     });
     </code-snippet>
@@ -481,13 +482,13 @@ defaults
 
 - When listing items, use gap utilities for spacing, don't use margins.
 
-                                            <code-snippet name="Valid Flex Gap Spacing Example" lang="html">
-                                                <div class="flex gap-8">
-                                                    <div>Superior</div>
-                                                    <div>Michigan</div>
-                                                    <div>Erie</div>
-                                                </div>
-                                            </code-snippet>
+                                              <code-snippet name="Valid Flex Gap Spacing Example" lang="html">
+                                                  <div class="flex gap-8">
+                                                      <div>Superior</div>
+                                                      <div>Michigan</div>
+                                                      <div>Erie</div>
+                                                  </div>
+                                              </code-snippet>
 
 ### Dark Mode
 

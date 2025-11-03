@@ -21,6 +21,16 @@ declare namespace App.Data.Dashboard {
         total_employees: number | null;
     };
 }
+declare namespace App.Data.DigitalEvidence {
+    export type DigitalEvidenceData = {
+        id: any | number;
+        name: string | null;
+        filepath: string | null;
+        created_at: string | null;
+        updated_at: string | null;
+        user: any;
+    };
+}
 declare namespace App.Data.Logbook {
     export type LogbookData = {
         id: any | number;
@@ -70,6 +80,16 @@ declare namespace App.Data.Shift {
         time_range_label: string | null;
         created_at: string | null;
         updated_at: string | null;
+    };
+}
+declare namespace App.Data.SocialMediaEvidence {
+    export type SocialMediaEvidenceData = {
+        id: any | number;
+        name: string | null;
+        filepath: string | null;
+        created_at: string | null;
+        updated_at: string | null;
+        user: any;
     };
 }
 declare namespace App.Data.User {
