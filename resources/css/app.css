@@ -1,0 +1,423 @@
+@import 'tailwindcss';
+
+@import 'tw-animate-css';
+
+@source '../views';
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+    --font-sans:
+        'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+
+    --radius-lg: var(--radius);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-sm: calc(var(--radius) - 4px);
+
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+
+    --color-chart-1: var(--chart-1);
+    --color-chart-2: var(--chart-2);
+    --color-chart-3: var(--chart-3);
+    --color-chart-4: var(--chart-4);
+    --color-chart-5: var(--chart-5);
+
+    --color-sidebar: var(--sidebar);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-ring: var(--sidebar-ring);
+}
+
+:root {
+    /* Backgrounds - Light blue/gray inspired by image */
+    --background: oklch(0.98 0.008 240);
+    --foreground: oklch(0.2 0.02 250);
+
+    /* Cards - Slightly lighter than background */
+    --card: oklch(0.995 0.005 240);
+    --card-foreground: oklch(0.2 0.02 250);
+
+    /* Popovers */
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.2 0.02 250);
+
+    /* Primary - Vibrant blue from image (#3b82f6 / rgb(59, 130, 246)) */
+    --primary: oklch(0.62 0.2 250);
+    --primary-foreground: oklch(1 0 0);
+
+    /* Secondary - Light gray */
+    --secondary: oklch(0.96 0.005 240);
+    --secondary-foreground: oklch(0.2 0.02 250);
+
+    /* Muted - Soft background */
+    --muted: oklch(0.965 0.008 240);
+    --muted-foreground: oklch(0.5 0.015 240);
+
+    /* Accent - Complementary to primary */
+    --accent: oklch(0.955 0.015 240);
+    --accent-foreground: oklch(0.3 0.05 250);
+
+    /* Destructive - Red for errors */
+    --destructive: oklch(0.55 0.22 25);
+    --destructive-foreground: oklch(0.98 0.01 25);
+
+    /* Borders & Inputs - Subtle with slight blue tint */
+    --border: oklch(0.92 0.01 240);
+    --input: oklch(0.92 0.01 240);
+    --ring: oklch(0.62 0.2 250);
+
+    /* Charts - Beautiful color palette */
+    --chart-1: oklch(0.62 0.2 250);
+    --chart-2: oklch(0.65 0.19 160);
+    --chart-3: oklch(0.7 0.15 280);
+    --chart-4: oklch(0.68 0.18 50);
+    --chart-5: oklch(0.75 0.16 340);
+
+    --radius: 0.625rem;
+
+    /* Sidebar - Clean and consistent */
+    --sidebar: oklch(0.995 0.005 240);
+    --sidebar-foreground: oklch(0.2 0.02 250);
+    --sidebar-primary: oklch(0.62 0.2 250);
+    --sidebar-primary-foreground: oklch(1 0 0);
+    --sidebar-accent: oklch(0.955 0.015 240);
+    --sidebar-accent-foreground: oklch(0.3 0.05 250);
+    --sidebar-border: oklch(0.92 0.01 240);
+    --sidebar-ring: oklch(0.62 0.2 250);
+
+    /* Additional colors */
+    --color-1: oklch(0.62 0.2 250);
+    --color-2: oklch(0.65 0.19 160);
+    --color-3: oklch(0.7 0.15 280);
+    --color-4: oklch(0.68 0.18 50);
+    --color-5: oklch(0.75 0.16 340);
+}
+
+.dark {
+    /* Dark mode backgrounds - Deep blue-gray */
+    --background: oklch(0.18 0.015 240);
+    --foreground: oklch(0.98 0.005 240);
+
+    /* Cards - Slightly lighter than background */
+    --card: oklch(0.22 0.015 240);
+    --card-foreground: oklch(0.98 0.005 240);
+
+    /* Popovers */
+    --popover: oklch(0.22 0.015 240);
+    --popover-foreground: oklch(0.98 0.005 240);
+
+    /* Primary - Vibrant blue (same as light mode) */
+    --primary: oklch(0.62 0.2 250);
+    --primary-foreground: oklch(1 0 0);
+
+    /* Secondary - Darker gray */
+    --secondary: oklch(0.28 0.012 240);
+    --secondary-foreground: oklch(0.98 0.005 240);
+
+    /* Muted - Subtle background */
+    --muted: oklch(0.26 0.012 240);
+    --muted-foreground: oklch(0.65 0.008 240);
+
+    /* Accent - Complementary to primary */
+    --accent: oklch(0.32 0.02 240);
+    --accent-foreground: oklch(0.75 0.15 250);
+
+    /* Destructive - Red for errors */
+    --destructive: oklch(0.45 0.18 25);
+    --destructive-foreground: oklch(0.98 0.01 25);
+
+    /* Borders & Inputs - Subtle with blue tint */
+    --border: oklch(0.32 0.015 240);
+    --input: oklch(0.32 0.015 240);
+    --ring: oklch(0.62 0.2 250);
+
+    /* Charts - Beautiful color palette (vibrant for dark mode) */
+    --chart-1: oklch(0.65 0.22 250);
+    --chart-2: oklch(0.68 0.2 160);
+    --chart-3: oklch(0.72 0.17 280);
+    --chart-4: oklch(0.7 0.2 50);
+    --chart-5: oklch(0.78 0.18 340);
+
+    /* Sidebar - Consistent with card */
+    --sidebar: oklch(0.22 0.015 240);
+    --sidebar-foreground: oklch(0.98 0.005 240);
+    --sidebar-primary: oklch(0.62 0.2 250);
+    --sidebar-primary-foreground: oklch(1 0 0);
+    --sidebar-accent: oklch(0.32 0.02 240);
+    --sidebar-accent-foreground: oklch(0.75 0.15 250);
+    --sidebar-border: oklch(0.32 0.015 240);
+    --sidebar-ring: oklch(0.62 0.2 250);
+
+    /* Additional colors */
+    --color-1: oklch(0.65 0.22 250);
+    --color-2: oklch(0.68 0.2 160);
+    --color-3: oklch(0.72 0.17 280);
+    --color-4: oklch(0.7 0.2 50);
+    --color-5: oklch(0.78 0.18 340);
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+
+    body {
+        @apply bg-background text-foreground;
+    }
+}
+
+@theme inline {
+    --color-sidebar: var(--sidebar);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-ring: var(--sidebar-ring);
+    --animate-marquee: marquee var(--duration) infinite linear;
+    --animate-marquee-vertical: marquee-vertical var(--duration) linear infinite;
+    @keyframes marquee {
+        from {
+            transform: translateX(0);
+        }
+        to {
+            transform: translateX(calc(-100% - var(--gap)));
+        }
+    }
+    @keyframes marquee-vertical {
+        from {
+            transform: translateY(0);
+        }
+        to {
+            transform: translateY(calc(-100% - var(--gap)));
+        }
+    }
+    --animate-orbit: orbit calc(var(--duration) * 1s) linear infinite;
+    @keyframes orbit {
+        0% {
+            transform: rotate(calc(var(--angle) * 1deg)) translateY(calc(var(--radius) * 1px)) rotate(calc(var(--angle) * -1deg));
+        }
+        100% {
+            transform: rotate(calc(var(--angle) * 1deg + 360deg)) translateY(calc(var(--radius) * 1px)) rotate(calc((var(--angle) * -1deg) - 360deg));
+        }
+    }
+    --animate-shine: shine var(--duration) infinite linear;
+    @keyframes shine {
+        0% {
+            background-position: 0% 0%;
+        }
+        50% {
+            background-position: 100% 100%;
+        }
+        to {
+            background-position: 0% 0%;
+        }
+    }
+    --animate-meteor: meteor 5s linear infinite;
+    @keyframes meteor {
+        0% {
+            transform: rotate(var(--angle)) translateX(0);
+            opacity: 1;
+        }
+        70% {
+            opacity: 1;
+        }
+        100% {
+            transform: rotate(var(--angle)) translateX(-500px);
+            opacity: 0;
+        }
+    }
+    --animate-background-position-spin: background-position-spin 3000ms infinite alternate;
+    @keyframes background-position-spin {
+        0% {
+            background-position: top center;
+        }
+        100% {
+            background-position: bottom center;
+        }
+    }
+    --animate-line-shadow: line-shadow 15s linear infinite;
+    @keyframes line-shadow {
+        0% {
+            background-position: 0 0;
+        }
+        100% {
+            background-position: 100% -100%;
+        }
+    }
+    --animate-aurora: aurora 8s ease-in-out infinite alternate;
+    @keyframes aurora {
+        0% {
+            background-position: 0% 50%;
+            transform: rotate(-5deg) scale(0.9);
+        }
+        25% {
+            background-position: 50% 100%;
+            transform: rotate(5deg) scale(1.1);
+        }
+        50% {
+            background-position: 100% 50%;
+            transform: rotate(-3deg) scale(0.95);
+        }
+        75% {
+            background-position: 50% 0%;
+            transform: rotate(3deg) scale(1.05);
+        }
+        100% {
+            background-position: 0% 50%;
+            transform: rotate(-5deg) scale(0.9);
+        }
+    }
+    --animate-shiny-text: shiny-text 8s infinite;
+    @keyframes shiny-text {
+        0%,
+        90%,
+        100% {
+            background-position: calc(-100% - var(--shiny-width)) 0;
+        }
+        30%,
+        60% {
+            background-position: calc(100% + var(--shiny-width)) 0;
+        }
+    }
+    --animate-gradient: gradient 8s linear infinite;
+    @keyframes gradient {
+        to {
+            background-position: var(--bg-size, 300%) 0;
+        }
+    }
+    --animate-blink-cursor: blink-cursor 1.2s step-end infinite;
+    @keyframes blink-cursor {
+        0%,
+        49% {
+            opacity: 1;
+        }
+        50%,
+        100% {
+            opacity: 0;
+        }
+    }
+    --animate-rainbow: rainbow var(--speed, 2s) infinite linear;
+    --color-color-5: var(--color-5);
+    --color-color-4: var(--color-4);
+    --color-color-3: var(--color-3);
+    --color-color-2: var(--color-2);
+    --color-color-1: var(--color-1);
+    @keyframes rainbow {
+        0% {
+            background-position: 0%;
+        }
+        100% {
+            background-position: 200%;
+        }
+    }
+    --animate-shimmer-slide: shimmer-slide var(--speed) ease-in-out infinite alternate;
+    --animate-spin-around: spin-around calc(var(--speed) * 2) infinite linear;
+    @keyframes shimmer-slide {
+        to {
+            transform: translate(calc(100cqw - 100%), 0);
+        }
+    }
+    @keyframes spin-around {
+        0% {
+            transform: translateZ(0) rotate(0);
+        }
+        15%,
+        35% {
+            transform: translateZ(0) rotate(90deg);
+        }
+        65%,
+        85% {
+            transform: translateZ(0) rotate(270deg);
+        }
+        100% {
+            transform: translateZ(0) rotate(360deg);
+        }
+    }
+    --animate-pulse: pulse var(--duration) ease-out infinite;
+    @keyframes pulse {
+        0%,
+        100% {
+            boxshadow: 0 0 0 0 var(--pulse-color);
+        }
+        50% {
+            boxshadow: 0 0 0 8px var(--pulse-color);
+        }
+    }
+    --animate-rippling: rippling var(--duration) ease-out;
+    @keyframes rippling {
+        0% {
+            opacity: 1;
+        }
+        100% {
+            transform: scale(2);
+            opacity: 0;
+        }
+    }
+    --animate-grid: grid 15s linear infinite;
+    @keyframes grid {
+        0% {
+            transform: translateY(-50%);
+        }
+        100% {
+            transform: translateY(0);
+        }
+    }
+    --animate-ripple: ripple var(--duration, 2s) ease calc(var(--i, 0) * 0.2s) infinite;
+    @keyframes ripple {
+        0%,
+        100% {
+            transform: translate(-50%, -50%) scale(1);
+        }
+        50% {
+            transform: translate(-50%, -50%) scale(0.9);
+        }
+    }
+}
+
+@layer base {
+    * {
+        @apply border-border outline-ring/50;
+    }
+    body {
+        @apply bg-background text-foreground;
+    }
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
+}

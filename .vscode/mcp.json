@@ -1,0 +1,21 @@
+{
+    "servers": {
+        "@magicuidesign/mcp": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@magicuidesign/mcp@latest"
+            ]
+        },
+        "shadcn": {
+            "url": "https://www.shadcn.io/api/mcp"
+        },
+        "laravel-boost": {
+            "command": "php",
+            "args": [
+                "artisan",
+                "boost:mcp"
+            ]
+        }
+    }
+}
