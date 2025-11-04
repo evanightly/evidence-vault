@@ -1,9 +1,6 @@
-import LogifyLogo from '@/components/logify-logo';
 import { AnimatedThemeToggler } from '@/components/ui/animated-theme-toggler';
 import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { home } from '@/routes';
-import { Link } from '@inertiajs/react';
 import { type PropsWithChildren } from 'react';
 
 export default function AuthCardLayout({
@@ -35,9 +32,9 @@ export default function AuthCardLayout({
 
             <div className='relative z-10 flex w-full max-w-md flex-col gap-8'>
                 {/* Logo */}
-                <Link href={home()} className='flex items-center justify-center transition-transform hover:scale-105'>
+                {/* <Link href={home()} className='flex items-center justify-center transition-transform hover:scale-105'>
                     <LogifyLogo className='h-auto w-full max-w-[280px]' />
-                </Link>
+                </Link> */}
 
                 {/* Auth Card */}
                 <div className='flex flex-col gap-6'>

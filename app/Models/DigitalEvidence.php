@@ -2,14 +2,17 @@
 
 namespace App\Models;
 
-use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class DigitalEvidence extends Model
-{
+class DigitalEvidence extends Model {
     use HasFactory;
+
+    /**
+     * @var string
+     */
+    protected $table = 'digital_evidences';
 
     /**
      * @var array<int, string>
@@ -20,8 +23,7 @@ class DigitalEvidence extends Model
         'user_id',
     ];
 
-    public function user(): BelongsTo
-    {
+    public function user(): BelongsTo {
         return $this->belongsTo(User::class);
     }
 }

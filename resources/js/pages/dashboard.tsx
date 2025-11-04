@@ -1,14 +1,45 @@
+import InputError from '@/components/input-error';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
-import { DateRangePicker, type DateRange } from '@/components/ui/date-range-picker';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { NumberTicker } from '@/components/ui/number-ticker';
+import { Progress } from '@/components/ui/progress';
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
-import { type BreadcrumbItem } from '@/types';
-import { Head, router } from '@inertiajs/react';
-import { format } from 'date-fns';
-import { useCallback, useMemo } from 'react';
-import { Bar, BarChart, CartesianGrid, Cell, Label, Pie, PieChart, XAxis, YAxis } from 'recharts';
+import type { BreadcrumbItem } from '@/types';
+import { Head, useForm, usePage } from '@inertiajs/react';
+import { useEffect, useState, type FormEvent } from 'react';
+
+type DashboardOverview = App.Data.Dashboard.DashboardData;
+type DashboardUploadStats = App.Data.Dashboard.DashboardUploadStatsData;
+
+type UploadResultItem = {
+    type: string;
+    title: string;
+    folder_url: string;
+    file_url: string;
+    file_name: string;
+};
+
+interface DashboardProps {
+    overview: DashboardOverview;
+}
+
+interface SharedPageProps extends Record<string, unknown> {
+    auth?: {
+        user?: {
+            id?: number;
+        };
+    };
+    flash?: {
+        success?: string;
+        info?: string;
+        warning?: string;
+        uploadResult?: UploadResultItem[];
+    };
+}
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -17,328 +48,283 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-type DashboardMetrics = App.Data.Dashboard.DashboardData;
-type CountByLabel = App.Data.Dashboard.CountByLabelData;
+const formatNumber = (value: number): string => new Intl.NumberFormat('id-ID').format(value);
 
-interface RoleChartDatum {
-    key: string;
-    label: string;
-    value: number;
-    fill: string;
-}
+const UploadSummary = ({ label, stats }: { label: string; stats: DashboardUploadStats }) => (
+    <Card>
+        <CardHeader>
+            <CardTitle>{label}</CardTitle>
+            <CardDescription>{`Ringkasan unggahan ${label.toLowerCase()}.`}</CardDescription>
+        </CardHeader>
+        <CardContent className='space-y-4'>
+            <div>
+                <p className='text-sm text-muted-foreground'>Total keseluruhan</p>
+                <NumberTicker value={stats.total} className='text-3xl font-semibold' />
+            </div>
+            <div className='grid gap-3 rounded-md border bg-muted/40 p-4 text-sm sm:grid-cols-2'>
+                <div className='space-y-1'>
+                    <p className='text-muted-foreground'>Unggahan bulan ini</p>
+                    <p className='font-semibold text-foreground'>{formatNumber(stats.this_month)}</p>
+                </div>
+                <div className='space-y-1'>
+                    <p className='text-muted-foreground'>Unggahan Anda bulan ini</p>
+                    <p className='font-semibold text-foreground'>{formatNumber(stats.mine_this_month)}</p>
+                </div>
+                <div className='space-y-1'>
+                    <p className='text-muted-foreground'>Total unggahan Anda</p>
+                    <p className='font-semibold text-foreground'>{formatNumber(stats.mine_total)}</p>
+                </div>
+            </div>
+        </CardContent>
+    </Card>
+);
 
-interface DashboardProps {
-    metrics: DashboardMetrics;
-}
+export default function Dashboard({ overview }: DashboardProps) {
+    const page = usePage<SharedPageProps>();
+    const flash = page.props.flash;
 
-const COLOR_PALETTE = ['#2563eb', '#16a34a', '#f97316', '#9333ea', '#0891b2', '#db2777'];
+    const [fileKey, setFileKey] = useState(0);
+    const [recentUploads, setRecentUploads] = useState<UploadResultItem[]>([]);
 
-const parseDateInput = (value?: string | null): Date | undefined => {
-    if (!value) {
-        return undefined;
-    }
+    type UploadFormState = { digital_name: string; digital_files: File[]; social_name: string; social_files: File[] };
+    type FileField = Extract<keyof UploadFormState, 'digital_files' | 'social_files'>;
 
-    const parsed = new Date(`${value}T00:00:00`);
+    const uploadForm = useForm<UploadFormState>(() => ({
+        digital_name: '',
+        digital_files: [],
+        social_name: '',
+        social_files: [],
+    }));
 
-    return Number.isNaN(parsed.getTime()) ? undefined : parsed;
-};
+    const disableUpload = !overview.drive_enabled;
 
-const formatDateForQuery = (value: Date | null | undefined): string | null => {
-    if (!value) {
-        return null;
-    }
+    const uploadProgress = uploadForm.progress?.percentage ?? null;
 
-    return format(value, 'yyyy-MM-dd');
-};
+    const getFieldError = (field: FileField): string | undefined => {
+        const errors = uploadForm.errors as Record<string, string | undefined>;
 
-export default function Dashboard({ metrics }: DashboardProps) {
-    const isManager = metrics.active_role === 'Admin' || metrics.active_role === 'SuperAdmin';
+        if (errors[field]) {
+            return errors[field];
+        }
 
-    const handleRangeChange = useCallback(
-        (payload: { range: DateRange; rangeCompare?: DateRange }) => {
-            const nextFrom = formatDateForQuery(payload.range.from ?? undefined);
-            const nextTo = formatDateForQuery(payload.range.to ?? payload.range.from ?? undefined);
+        const prefixed = Object.entries(errors).find(([key]) => key.startsWith(`${field}.`));
 
-            const currentFrom = metrics.filters.date_from ?? null;
-            const currentTo = metrics.filters.date_to ?? null;
+        return prefixed?.[1];
+    };
 
-            if (nextFrom === currentFrom && nextTo === currentTo) {
+    const clearFileErrors = (field: FileField) => {
+        const errors = uploadForm.errors as Record<string, string | undefined>;
+        const prefixedKeys = Object.keys(errors).filter((key) => key.startsWith(`${field}.`));
+
+        uploadForm.clearErrors(field, ...(prefixedKeys as Array<`${FileField}.${number}`>));
+    };
+
+    useEffect(() => {
+        const handleCompleted = (event: Event) => {
+            const detail = (event as CustomEvent<UploadResultItem>).detail;
+
+            if (!detail) {
                 return;
             }
 
-            router.get(
-                dashboard({
-                    query: {
-                        date_from: nextFrom,
-                        date_to: nextTo,
-                    },
-                }).url,
-                {
-                    preserveState: true,
-                    preserveScroll: true,
-                    replace: true,
-                },
-            );
-        },
-        [metrics.filters.date_from, metrics.filters.date_to],
-    );
+            setRecentUploads((previous) => [detail, ...previous].slice(0, 6));
+            uploadForm.reset();
+            uploadForm.clearErrors();
+            setFileKey((previous) => previous + 1);
+        };
 
-    const workLocationChartConfig = useMemo<ChartConfig>(
-        () => ({
-            count: {
-                label: 'Jumlah Log',
-                color: 'var(--primary)',
+        window.addEventListener('evidence-upload:completed', handleCompleted as EventListener);
+
+        return () => {
+            window.removeEventListener('evidence-upload:completed', handleCompleted as EventListener);
+        };
+    }, [uploadForm]);
+
+    const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+
+        const hasDigital = uploadForm.data.digital_files.length > 0;
+        const hasSocial = uploadForm.data.social_files.length > 0;
+
+        if (!hasDigital && !hasSocial) {
+            uploadForm.setError('digital_files', 'Silakan pilih minimal satu berkas terlebih dahulu.');
+            return;
+        }
+
+        uploadForm.post('/dashboard/uploads', {
+            preserveScroll: true,
+            forceFormData: true,
+            onSuccess: () => {
+                uploadForm.reset();
+                uploadForm.clearErrors();
+                setFileKey((previous) => previous + 1);
             },
-        }),
-        [],
-    );
-
-    const workLocationChartData = useMemo<{ label: string; count: number }[]>(
-        () =>
-            metrics.logs_per_work_location.map((item: CountByLabel) => ({
-                label: item.label,
-                count: item.count,
-            })),
-        [metrics.logs_per_work_location],
-    );
-
-    const employeeChartData = useMemo<{ label: string; count: number }[]>(
-        () =>
-            metrics.logs_per_employee.map((item: CountByLabel) => ({
-                label: item.label,
-                count: item.count,
-            })),
-        [metrics.logs_per_employee],
-    );
-
-    const roleChartData = useMemo<RoleChartDatum[]>(
-        () =>
-            metrics.employees_per_role.map((item: CountByLabel, index: number) => ({
-                key: `${item.label}-${index}`,
-                label: item.label,
-                value: item.count,
-                fill: COLOR_PALETTE[index % COLOR_PALETTE.length],
-            })),
-        [metrics.employees_per_role],
-    );
-
-    const roleChartConfig = useMemo<ChartConfig>(
-        () => ({
-            value: {
-                label: 'Jumlah Pengguna',
-                color: 'var(--primary)',
-            },
-        }),
-        [],
-    );
-
-    const locationList = useMemo<CountByLabel[]>(() => metrics.logs_per_work_location.slice(0, 8), [metrics.logs_per_work_location]);
-
-    const initialDateFrom = parseDateInput(metrics.filters.date_from ?? undefined);
-    const initialDateTo = parseDateInput(metrics.filters.date_to ?? undefined);
+        });
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title='Dashboard' />
+            <Head title='Dasbor' />
+
             <div className='mt-8 flex flex-1 flex-col gap-6'>
-                <div className='flex flex-wrap items-start justify-between gap-4'>
-                    <div className='space-y-1'>
-                        <h1 className='text-2xl font-semibold text-foreground'>Dasbor</h1>
-                        <p className='text-sm text-muted-foreground'>Pantau ringkasan aktivitas logbook sesuai rentang tanggal yang dipilih.</p>
-                    </div>
-                    <div className='w-full max-w-sm sm:w-auto'>
-                        <DateRangePicker
-                            onUpdate={handleRangeChange}
-                            initialDateFrom={initialDateFrom}
-                            initialDateTo={initialDateTo}
-                            locale='id-ID'
-                            placeholder='Pilih rentang tanggal'
-                        />
-                    </div>
-                </div>
-
-                <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Total Log</CardTitle>
-                            <CardDescription>Jumlah entri logbook pada rentang tanggal terpilih.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <NumberTicker value={metrics.totals.total_logs} className='text-3xl font-semibold' />
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Lokasi Aktif</CardTitle>
-                            <CardDescription>Lokasi kerja yang memiliki log selama rentang tersebut.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <NumberTicker value={metrics.logs_per_work_location.length} className='text-3xl font-semibold' />
-                        </CardContent>
-                    </Card>
-
-                    {isManager && metrics.totals.active_employees !== null && (
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Teknisi Aktif</CardTitle>
-                                <CardDescription>Jumlah teknisi yang berkontribusi pada log di rentang ini.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <NumberTicker value={metrics.totals.active_employees} className='text-3xl font-semibold' />
-                            </CardContent>
-                        </Card>
-                    )}
-
-                    {isManager && metrics.totals.total_employees !== null && (
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Total Pengguna</CardTitle>
-                                <CardDescription>Total akun berdasarkan peran di dalam sistem.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <NumberTicker value={metrics.totals.total_employees} className='text-3xl font-semibold' />
-                            </CardContent>
-                        </Card>
-                    )}
-                </div>
+                <section className='rounded-lg border bg-card p-6 shadow-sm'>
+                    <p className='text-sm text-muted-foreground'>{overview.current_month_label}</p>
+                    <h1 className='mt-1 text-2xl font-semibold text-foreground'>{overview.greeting}</h1>
+                    <p className='mt-2 text-sm text-muted-foreground'>{overview.description}</p>
+                </section>
 
                 <div className='grid gap-4 lg:grid-cols-2'>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Distribusi Log per Lokasi</CardTitle>
-                            <CardDescription>Tampilan jumlah logbook berdasarkan lokasi kerja.</CardDescription>
-                        </CardHeader>
-                        <CardContent className='h-[320px] px-0 pb-6'>
-                            {workLocationChartData.length === 0 ? (
-                                <p className='px-6 text-sm text-muted-foreground'>Belum ada data log untuk ditampilkan.</p>
-                            ) : (
-                                <ChartContainer config={workLocationChartConfig} className='h-full'>
-                                    <BarChart data={workLocationChartData} barCategoryGap={24} margin={{ top: 16, right: 24, left: 8, bottom: 24 }}>
-                                        <CartesianGrid strokeDasharray='4 4' vertical={false} />
-                                        <XAxis dataKey='label' tickLine={false} axisLine={false} fontSize={12} interval={0} angle={-20} dy={24} />
-                                        <YAxis allowDecimals={false} tickLine={false} axisLine={false} fontSize={12} />
-                                        <ChartTooltip content={<ChartTooltipContent />} />
-                                        <Bar dataKey='count' fill='var(--color-1)' radius={[8, 8, 0, 0]} />
-                                    </BarChart>
-                                </ChartContainer>
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    {isManager ? (
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Log per Teknisi</CardTitle>
-                                <CardDescription>10 teknisi dengan jumlah log terbanyak pada rentang ini.</CardDescription>
-                            </CardHeader>
-                            <CardContent className='h-[320px] px-0 pb-6'>
-                                {employeeChartData.length === 0 ? (
-                                    <p className='px-6 text-sm text-muted-foreground'>Belum ada data teknisi untuk ditampilkan.</p>
-                                ) : (
-                                    <ChartContainer config={workLocationChartConfig} className='h-full'>
-                                        <BarChart
-                                            data={employeeChartData}
-                                            layout='vertical'
-                                            margin={{ top: 16, right: 24, left: 16, bottom: 16 }}
-                                            barCategoryGap={16}
-                                        >
-                                            <CartesianGrid strokeDasharray='4 4' horizontal={false} />
-                                            <XAxis type='number' allowDecimals={false} axisLine={false} tickLine={false} fontSize={12} />
-                                            <YAxis type='category' dataKey='label' axisLine={false} tickLine={false} width={140} fontSize={12} />
-                                            <ChartTooltip content={<ChartTooltipContent />} />
-                                            <Bar dataKey='count' fill='var(--color-2)' radius={[0, 8, 8, 0]} />
-                                        </BarChart>
-                                    </ChartContainer>
-                                )}
-                            </CardContent>
-                        </Card>
-                    ) : (
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Ringkasan Lokasi</CardTitle>
-                                <CardDescription>Lokasi aktivitas logbook pribadi Anda.</CardDescription>
-                            </CardHeader>
-                            <CardContent className='space-y-3'>
-                                {locationList.length === 0 ? (
-                                    <p className='text-sm text-muted-foreground'>Belum ada catatan logbook yang ditemukan.</p>
-                                ) : (
-                                    <div className='space-y-3'>
-                                        {locationList.map((item: CountByLabel) => (
-                                            <div
-                                                key={`location-${item.label}`}
-                                                className='flex items-center justify-between rounded-lg border px-4 py-3'
-                                            >
-                                                <span className='text-sm font-medium text-foreground'>{item.label}</span>
-                                                <span className='text-sm text-muted-foreground'>{item.count} log</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </CardContent>
-                        </Card>
-                    )}
+                    <UploadSummary label='Bukti Digital' stats={overview.digital} />
+                    <UploadSummary label='Bukti Medsos' stats={overview.social} />
                 </div>
 
-                {isManager && (
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Total Pengguna per Peran</CardTitle>
-                            <CardDescription>Distribusi akun di seluruh sistem berdasarkan peran.</CardDescription>
-                        </CardHeader>
-                        <CardContent className='h-[340px] px-0 pb-6'>
-                            {roleChartData.length === 0 ? (
-                                <p className='px-6 text-sm text-muted-foreground'>Belum ada data pengguna untuk ditampilkan.</p>
-                            ) : (
-                                <ChartContainer config={roleChartConfig} className='mx-auto aspect-square max-h-full max-w-xl'>
-                                    <PieChart>
-                                        <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-                                        <Pie
-                                            data={roleChartData}
-                                            dataKey='value'
-                                            nameKey='label'
-                                            innerRadius={70}
-                                            outerRadius={120}
-                                            strokeWidth={2}
-                                            paddingAngle={2}
-                                        >
-                                            <Label
-                                                content={({ viewBox }) => {
-                                                    if (viewBox && 'cx' in viewBox && 'cy' in viewBox) {
-                                                        const total = roleChartData.reduce<number>((sum, entry) => sum + entry.value, 0);
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Unggah Bukti</CardTitle>
+                        <CardDescription>Pilih jenis bukti dan unggah ke Google Drive dengan cepat.</CardDescription>
+                    </CardHeader>
+                    <CardContent className='space-y-6'>
+                        {disableUpload && (
+                            <p className='rounded-md border border-dashed border-amber-500 bg-amber-50/80 p-3 text-sm text-amber-700'>
+                                Integrasi Google Drive belum aktif. Hubungi administrator untuk mengaktifkannya sebelum mengunggah bukti.
+                            </p>
+                        )}
 
-                                                        return (
-                                                            <text x={viewBox.cx} y={viewBox.cy} textAnchor='middle' dominantBaseline='middle'>
-                                                                <tspan
-                                                                    x={viewBox.cx}
-                                                                    y={viewBox.cy}
-                                                                    className='fill-foreground text-3xl font-semibold'
-                                                                >
-                                                                    {total}
-                                                                </tspan>
-                                                                <tspan
-                                                                    x={viewBox.cx}
-                                                                    y={(viewBox.cy ?? 0) + 24}
-                                                                    className='fill-muted-foreground text-sm'
-                                                                >
-                                                                    Total Pengguna
-                                                                </tspan>
-                                                            </text>
-                                                        );
-                                                    }
-                                                    return null;
-                                                }}
-                                            />
-                                            {roleChartData.map((entry: RoleChartDatum) => (
-                                                <Cell key={entry.key} fill={entry.fill} />
-                                            ))}
-                                        </Pie>
-                                    </PieChart>
-                                </ChartContainer>
+                        {flash?.info && (
+                            <Alert>
+                                <AlertTitle>Unggahan sedang diproses</AlertTitle>
+                                <AlertDescription>{flash.info}</AlertDescription>
+                            </Alert>
+                        )}
+
+                        <form className='space-y-6' onSubmit={handleSubmit}>
+                            <div className='space-y-4'>
+                                <div className='space-y-2'>
+                                    <div className='space-y-1'>
+                                        <h3 className='text-base font-semibold text-foreground'>Bukti Digital</h3>
+                                        <p className='text-sm text-muted-foreground'>Unggah bukti digital dengan format JPG, JPEG, PNG, atau WEBP.</p>
+                                    </div>
+                                    <Label htmlFor='digital-name'>Nama Bukti (opsional)</Label>
+                                    <Input
+                                        id='digital-name'
+                                        name='digital_name'
+                                        placeholder='Contoh: Shift Pagi - 3 November'
+                                        value={uploadForm.data.digital_name}
+                                        onChange={(event) => {
+                                            uploadForm.setData('digital_name', event.target.value);
+                                            uploadForm.clearErrors('digital_name');
+                                        }}
+                                        disabled={uploadForm.processing || disableUpload}
+                                    />
+                                    <InputError message={uploadForm.errors.digital_name} />
+                                </div>
+                                <div className='space-y-2'>
+                                    <Label htmlFor='digital-file'>Pilih Berkas Digital</Label>
+                                    <Input
+                                        key={`digital-${fileKey}`}
+                                        id='digital-file'
+                                        name='digital_files'
+                                        type='file'
+                                        accept='.jpg,.jpeg,.png,.webp'
+                                        multiple
+                                        onChange={(event) => {
+                                            const files = Array.from(event.currentTarget.files ?? []);
+                                            uploadForm.setData('digital_files', files);
+                                            clearFileErrors('digital_files');
+                                            clearFileErrors('social_files');
+                                        }}
+                                        disabled={uploadForm.processing || disableUpload}
+                                    />
+                                    <InputError message={getFieldError('digital_files')} />
+                                </div>
+                            </div>
+
+                            <div className='space-y-4'>
+                                <div className='space-y-2'>
+                                    <div className='space-y-1'>
+                                        <h3 className='text-base font-semibold text-foreground'>Bukti Medsos</h3>
+                                        <p className='text-sm text-muted-foreground'>Unggah bukti medsos dengan format JPG, JPEG, PNG, atau WEBP.</p>
+                                    </div>
+                                    <Label htmlFor='social-name'>Nama Bukti (opsional)</Label>
+                                    <Input
+                                        id='social-name'
+                                        name='social_name'
+                                        placeholder='Contoh: Postingan IG - 3 November'
+                                        value={uploadForm.data.social_name}
+                                        onChange={(event) => {
+                                            uploadForm.setData('social_name', event.target.value);
+                                            uploadForm.clearErrors('social_name');
+                                        }}
+                                        disabled={uploadForm.processing || disableUpload}
+                                    />
+                                    <InputError message={uploadForm.errors.social_name} />
+                                </div>
+                                <div className='space-y-2'>
+                                    <Label htmlFor='social-file'>Pilih Berkas Medsos</Label>
+                                    <Input
+                                        key={`social-${fileKey}`}
+                                        id='social-file'
+                                        name='social_files'
+                                        type='file'
+                                        accept='.jpg,.jpeg,.png,.webp'
+                                        multiple
+                                        onChange={(event) => {
+                                            const files = Array.from(event.currentTarget.files ?? []);
+                                            uploadForm.setData('social_files', files);
+                                            clearFileErrors('social_files');
+                                            clearFileErrors('digital_files');
+                                        }}
+                                        disabled={uploadForm.processing || disableUpload}
+                                    />
+                                    <InputError message={getFieldError('social_files')} />
+                                </div>
+                            </div>
+
+                            {uploadProgress !== null && (
+                                <div className='space-y-2'>
+                                    <p className='text-sm text-muted-foreground'>Mengunggah ke Google Drive… {uploadProgress}%</p>
+                                    <Progress value={uploadProgress} />
+                                </div>
                             )}
-                        </CardContent>
-                    </Card>
-                )}
+
+                            <Button type='submit' className='w-full sm:w-auto' disabled={uploadForm.processing || disableUpload}>
+                                {uploadForm.processing ? 'Mengunggah…' : 'Unggah Bukti'}
+                            </Button>
+                        </form>
+
+                        {recentUploads.length > 0 && (
+                            <div className='space-y-3 rounded-md border bg-muted/40 p-4'>
+                                <div>
+                                    <h4 className='text-sm font-semibold text-foreground'>Tautan Bukti Terbaru</h4>
+                                    <p className='text-xs text-muted-foreground'>Tautan akan muncul otomatis setelah unggahan selesai diproses.</p>
+                                </div>
+                                <div className='space-y-3'>
+                                    {recentUploads.map((item) => (
+                                        <div key={`${item.type}-${item.file_url}`} className='space-y-1'>
+                                            <p className='text-sm font-medium text-foreground'>{item.title}</p>
+                                            <a
+                                                href={item.folder_url}
+                                                target='_blank'
+                                                rel='noreferrer'
+                                                className='text-sm font-medium text-primary underline-offset-2 hover:underline'
+                                            >
+                                                Buka folder di Google Drive
+                                            </a>
+                                            <a
+                                                href={item.file_url}
+                                                target='_blank'
+                                                rel='noreferrer'
+                                                className='text-xs text-muted-foreground underline-offset-2 hover:underline'
+                                            >
+                                                Lihat berkas: {item.file_name}
+                                            </a>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
             </div>
         </AppLayout>
     );

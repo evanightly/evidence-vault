@@ -40,6 +40,7 @@ This application is a Laravel application and its main Laravel ecosystems packag
 - Action Pattern Design
 
 ## Business Process Understanding (Important)
+
 important: Use Indonesian language for creating user interface text (labels, buttons, messages, etc).
 
 1. The main business of this project is to upload 2 kind of files into google drive (digital and media social)
@@ -51,8 +52,8 @@ important: Use Indonesian language for creating user interface text (labels, but
 7. After uploading files, the link to google drive folder should be shown in a centered popup
 8. The folder structure in google drive should follow the structure below
 
-~/RRI/Evidence/[Nama Karyawan]/Eka/Digital/[Nama Bulan + Tahun]
-~/RRI/Evidence/[Nama Karyawan]/Eka/Medsos/[Nama Bulan + Tahun]
+~/RRI/Evidence/[Nama Karyawan]/Digital/[Nama Bulan + Tahun]
+~/RRI/Evidence/[Nama Karyawan]/Medsos/[Nama Bulan + Tahun]
 
 - RRI
     - Evidence
@@ -344,7 +345,7 @@ Route::get('/users', function () {
   it('returns all', function () {
   $response = $this->postJson('/api/docs', []);
 
-                                                $response->assertSuccessful();
+                                                  $response->assertSuccessful();
 
     });
     </code-snippet>
@@ -482,13 +483,13 @@ defaults
 
 - When listing items, use gap utilities for spacing, don't use margins.
 
-                                              <code-snippet name="Valid Flex Gap Spacing Example" lang="html">
-                                                  <div class="flex gap-8">
-                                                      <div>Superior</div>
-                                                      <div>Michigan</div>
-                                                      <div>Erie</div>
-                                                  </div>
-                                              </code-snippet>
+                                                <code-snippet name="Valid Flex Gap Spacing Example" lang="html">
+                                                    <div class="flex gap-8">
+                                                        <div>Superior</div>
+                                                        <div>Michigan</div>
+                                                        <div>Erie</div>
+                                                    </div>
+                                                </code-snippet>
 
 ### Dark Mode
 

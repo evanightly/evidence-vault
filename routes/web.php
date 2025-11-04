@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DashboardEvidenceController;
 use App\Http\Controllers\DigitalEvidenceController;
 use App\Http\Controllers\LogbookController;
 use App\Http\Controllers\LogbookEvidenceController;
@@ -16,15 +17,17 @@ Route::redirect('/', 'login')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
+    Route::post('dashboard/uploads', [DashboardEvidenceController::class, 'store'])
+        ->name('dashboard.uploads.store');
     Route::resource('users', UserController::class);
-    Route::resource('logbooks', LogbookController::class);
-    Route::resource('shifts', ShiftController::class);
-    Route::resource('logbook-work-details', LogbookWorkDetailController::class);
-    Route::resource('logbook-evidences', LogbookEvidenceController::class);
-    Route::resource('work-locations', WorkLocationController::class);
-    Route::resource('work-locations.shifts', WorkLocationShiftController::class)
-        ->only(['store', 'update', 'destroy'])
-        ->scoped();
+    // Route::resource('logbooks', LogbookController::class);
+    // Route::resource('shifts', ShiftController::class);
+    // Route::resource('logbook-work-details', LogbookWorkDetailController::class);
+    // Route::resource('logbook-evidences', LogbookEvidenceController::class);
+    // Route::resource('work-locations', WorkLocationController::class);
+    // Route::resource('work-locations.shifts', WorkLocationShiftController::class)
+    //     ->only(['store', 'update', 'destroy'])
+    //     ->scoped();
 
     Route::resource('digital-evidences', DigitalEvidenceController::class);
 

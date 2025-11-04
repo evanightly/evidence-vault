@@ -2,14 +2,17 @@
 
 namespace App\Models;
 
-use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class SocialMediaEvidence extends Model
-{
+class SocialMediaEvidence extends Model {
     use HasFactory;
+
+    /**
+     * @var string
+     */
+    protected $table = 'social_media_evidences';
 
     /**
      * @var array<int, string>
@@ -20,8 +23,7 @@ class SocialMediaEvidence extends Model
         'user_id',
     ];
 
-    public function user(): BelongsTo
-    {
+    public function user(): BelongsTo {
         return $this->belongsTo(User::class);
     }
 }

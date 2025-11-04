@@ -51,27 +51,27 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
             href: dashboard(),
             icon: LayoutGrid,
         },
-        {
-            title: 'Logbook',
-            href: LogbookController.index(),
-            icon: BookOpen,
-        },
+        // {
+        //     title: 'Logbook',
+        //     href: LogbookController.index(),
+        //     icon: BookOpen,
+        // },
     ];
 
-    if (isSuperAdmin || isAdmin) {
-        mainNavItems.push(
-            {
-                title: 'Pengguna',
-                href: UserController.index(),
-                icon: User,
-            },
-            {
-                title: 'Lokasi Kerja',
-                href: WorkLocationController.index(),
-                icon: Building,
-            },
-        );
-    }
+    // if (isSuperAdmin || isAdmin) {
+    //     mainNavItems.push(
+    //         {
+    //             title: 'Pengguna',
+    //             href: UserController.index(),
+    //             icon: User,
+    //         },
+    //         {
+    //             title: 'Lokasi Kerja',
+    //             href: WorkLocationController.index(),
+    //             icon: Building,
+    //         },
+    //     );
+    // }
 
     return (
         <>

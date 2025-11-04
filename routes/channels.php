@@ -9,3 +9,7 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 Broadcast::channel('logbook.drive-progress.{userId}', function ($user, $userId) {
     return (int) $user->id === (int) $userId;
 });
+
+Broadcast::channel('evidence.drive-progress.{userId}', function ($user, $userId) {
+    return (int) $user->id === (int) $userId;
+});

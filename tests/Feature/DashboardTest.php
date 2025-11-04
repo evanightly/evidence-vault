@@ -1,10 +1,9 @@
 <?php
 
-use App\Models\Logbook;
-use App\Models\Shift;
+use App\Models\DigitalEvidence;
+use App\Models\SocialMediaEvidence;
 use App\Models\User;
-use App\Models\WorkLocation;
-use App\Support\RoleEnum;
+use Illuminate\Support\Carbon;
 use Inertia\Testing\AssertableInertia as Assert;
 
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
@@ -16,199 +15,78 @@ test('guests are redirected to the login page', function () {
 test('authenticated users can visit the dashboard', function () {
     $this->actingAs($user = User::factory()->create());
 
-    $this->get(route('dashboard'))->assertOk();
+    $this->get(route('dashboard'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->component('dashboard'));
 });
 
-test('admins see aggregated dashboard metrics', function () {
-    $admin = User::factory()->admin()->create();
+test('dashboard provides evidence overview metrics', function () {
+    Carbon::setTestNow(Carbon::parse('2025-12-15 08:00:00'));
 
-    $studio = WorkLocation::factory()->create(['name' => 'Studio']);
-    $field = WorkLocation::factory()->create(['name' => 'Lapangan']);
+    $user = User::factory()->create(['name' => 'Budi Santoso']);
+    $otherUser = User::factory()->create();
 
-    $studioShift = Shift::factory()->create([
-        'work_location_id' => $studio->getKey(),
-        'name' => 'Pagi',
-        'start_time' => '07:00:00',
-        'end_time' => '15:00:00',
-    ]);
+    DigitalEvidence::factory()->for($user)
+        ->create(['created_at' => now()->subDay(), 'updated_at' => now()->subDay()]);
+    DigitalEvidence::factory()->for($user)
+        ->create([
+            'created_at' => now()->subMonth()->startOfMonth(),
+            'updated_at' => now()->subMonth()->startOfMonth(),
+        ]);
+    DigitalEvidence::factory()->for($otherUser)
+        ->create(['created_at' => now()->subDays(2), 'updated_at' => now()->subDays(2)]);
 
-    $fieldShift = Shift::factory()->create([
-        'work_location_id' => $field->getKey(),
-        'name' => 'Sore',
-        'start_time' => '15:00:00',
-        'end_time' => '23:00:00',
-    ]);
+    SocialMediaEvidence::factory()->for($user)
+        ->create(['created_at' => now()->subHours(6), 'updated_at' => now()->subHours(6)]);
+    SocialMediaEvidence::factory()->for($user)
+        ->create([
+            'created_at' => now()->subMonths(2)->startOfMonth(),
+            'updated_at' => now()->subMonths(2)->startOfMonth(),
+        ]);
+    SocialMediaEvidence::factory()->for($otherUser)
+        ->create(['created_at' => now()->subHours(12), 'updated_at' => now()->subHours(12)]);
 
-    $technicianA = User::factory()->create(['name' => 'Teknisi A']);
-    $technicianB = User::factory()->create(['name' => 'Teknisi B']);
+    config()->set('logbook.drive.enabled', true);
 
-    Logbook::factory()->for($technicianA, 'technician')->create([
-        'date' => '2025-01-05',
-        'work_location_id' => $studio->getKey(),
-        'shift_id' => $studioShift->getKey(),
-    ]);
-
-    Logbook::factory()->for($technicianA, 'technician')->create([
-        'date' => '2025-01-08',
-        'work_location_id' => $studio->getKey(),
-        'shift_id' => $studioShift->getKey(),
-    ]);
-
-    Logbook::factory()->for($technicianB, 'technician')->create([
-        'date' => '2025-01-10',
-        'work_location_id' => $field->getKey(),
-        'shift_id' => $fieldShift->getKey(),
-    ]);
-
-    Logbook::factory()->for($technicianB, 'technician')->create([
-        'date' => '2025-02-15',
-        'work_location_id' => $field->getKey(),
-        'shift_id' => $fieldShift->getKey(),
-    ]);
-
-    $response = $this
-        ->actingAs($admin)
-        ->get(route('dashboard', [
-            'date_from' => '2025-01-01',
-            'date_to' => '2025-01-31',
-        ]));
+    $response = $this->actingAs($user)->get(route('dashboard'));
 
     $response
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('dashboard')
-            ->where('metrics.active_role', RoleEnum::Admin->value)
-            ->where('metrics.totals.total_logs', 3)
-            ->where('metrics.totals.active_employees', 2)
-            ->where('metrics.totals.total_employees', 3)
-            ->where('metrics.logs_per_work_location', function ($value) use ($studio, $field): bool {
-                if ($value instanceof \Illuminate\Support\Collection) {
-                    $value = $value->toArray();
-                }
-
-                if (!is_array($value)) {
-                    return false;
-                }
-
-                $counts = collect($value)->mapWithKeys(fn ($item) => [
-                    (string) ($item['label'] ?? '') => (int) ($item['count'] ?? 0),
-                ]);
-
-                return $counts->get($studio->name) === 2 && $counts->get($field->name) === 1;
-            })
-            ->where('metrics.logs_per_employee', function ($value) use ($technicianA, $technicianB): bool {
-                if ($value instanceof \Illuminate\Support\Collection) {
-                    $value = $value->toArray();
-                }
-
-                if (!is_array($value)) {
-                    return false;
-                }
-
-                $counts = collect($value)->mapWithKeys(fn ($item) => [
-                    (string) ($item['label'] ?? '') => (int) ($item['count'] ?? 0),
-                ]);
-
-                return $counts->get($technicianA->name) === 2 && $counts->get($technicianB->name) === 1;
-            })
-            ->where('metrics.employees_per_role', function ($value): bool {
-                if ($value instanceof \Illuminate\Support\Collection) {
-                    $value = $value->toArray();
-                }
-
-                if (!is_array($value)) {
-                    return false;
-                }
-
-                $counts = collect($value)->mapWithKeys(fn ($item) => [
-                    (string) ($item['label'] ?? '') => (int) ($item['count'] ?? 0),
-                ]);
-
-                return $counts->get(RoleEnum::Admin->label()) === 1
-                    && $counts->get(RoleEnum::Employee->label()) === 2;
-            })
+            ->where('overview.greeting', 'Selamat datang, Budi!')
+            ->where('overview.description', 'Unggah bukti digital dan medsos langsung dari dasbor.')
+            ->where('overview.current_month_label', 'Desember 2025')
+            ->where('overview.drive_enabled', true)
+            ->where('overview.digital.total', 3)
+            ->where('overview.digital.this_month', 2)
+            ->where('overview.digital.mine_total', 2)
+            ->where('overview.digital.mine_this_month', 1)
+            ->where('overview.social.total', 3)
+            ->where('overview.social.this_month', 2)
+            ->where('overview.social.mine_total', 2)
+            ->where('overview.social.mine_this_month', 1)
         );
+
+    Carbon::setTestNow();
 });
 
-test('employees see personal dashboard metrics', function () {
-    $employee = User::factory()->create(['name' => 'Teknisi A']);
-    $otherEmployee = User::factory()->create(['name' => 'Teknisi B']);
+test('dashboard indicates when google drive is disabled', function () {
+    Carbon::setTestNow(Carbon::parse('2025-12-15 08:00:00'));
 
-    $studio = WorkLocation::factory()->create(['name' => 'Studio']);
-    $field = WorkLocation::factory()->create(['name' => 'Lapangan']);
+    $user = User::factory()->create(['name' => 'Siti Aminah']);
 
-    $studioShift = Shift::factory()->create([
-        'work_location_id' => $studio->getKey(),
-        'name' => 'Pagi',
-        'start_time' => '07:00:00',
-        'end_time' => '15:00:00',
-    ]);
+    config()->set('logbook.drive.enabled', false);
 
-    $fieldShift = Shift::factory()->create([
-        'work_location_id' => $field->getKey(),
-        'name' => 'Sore',
-        'start_time' => '15:00:00',
-        'end_time' => '23:00:00',
-    ]);
-
-    Logbook::factory()->for($employee, 'technician')->create([
-        'date' => '2025-03-01',
-        'work_location_id' => $studio->getKey(),
-        'shift_id' => $studioShift->getKey(),
-    ]);
-
-    Logbook::factory()->for($employee, 'technician')->create([
-        'date' => '2025-03-02',
-        'work_location_id' => $field->getKey(),
-        'shift_id' => $fieldShift->getKey(),
-    ]);
-
-    Logbook::factory()->for($otherEmployee, 'technician')->create([
-        'date' => '2025-03-03',
-        'work_location_id' => $field->getKey(),
-        'shift_id' => $fieldShift->getKey(),
-    ]);
-
-    $response = $this->actingAs($employee)->get(route('dashboard'));
+    $response = $this->actingAs($user)->get(route('dashboard'));
 
     $response
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('dashboard')
-            ->where('metrics.active_role', RoleEnum::Employee->value)
-            ->where('metrics.totals.total_logs', 2)
-            ->where('metrics.totals.active_employees', null)
-            ->where('metrics.totals.total_employees', null)
-            ->where('metrics.logs_per_employee', function ($value): bool {
-                if ($value instanceof \Illuminate\Support\Collection) {
-                    $value = $value->toArray();
-                }
-
-                return is_array($value) && count($value) === 0;
-            })
-            ->where('metrics.employees_per_role', function ($value): bool {
-                if ($value instanceof \Illuminate\Support\Collection) {
-                    $value = $value->toArray();
-                }
-
-                return is_array($value) && count($value) === 0;
-            })
-            ->where('metrics.logs_per_work_location', function ($value) use ($studio, $field): bool {
-                if ($value instanceof \Illuminate\Support\Collection) {
-                    $value = $value->toArray();
-                }
-
-                if (!is_array($value)) {
-                    return false;
-                }
-
-                $counts = collect($value)->mapWithKeys(fn ($item) => [
-                    (string) ($item['label'] ?? '') => (int) ($item['count'] ?? 0),
-                ]);
-
-                return $counts->get($studio->name) === 1
-                    && $counts->get($field->name) === 1
-                    && count($value) === 2;
-            })
+            ->where('overview.greeting', 'Selamat datang, Siti!')
+            ->where('overview.drive_enabled', false)
         );
+
+    Carbon::setTestNow();
 });

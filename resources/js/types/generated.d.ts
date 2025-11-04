@@ -4,12 +4,12 @@ declare namespace App.Data.Dashboard {
         count: number;
     };
     export type DashboardData = {
-        filters: App.Data.Dashboard.DashboardFilterData;
-        totals: App.Data.Dashboard.DashboardTotalsData;
-        logs_per_work_location: any;
-        logs_per_employee: any;
-        employees_per_role: any;
-        active_role: string;
+        greeting: string;
+        description: string;
+        current_month_label: string;
+        digital: any;
+        social: any;
+        drive_enabled: boolean;
     };
     export type DashboardFilterData = {
         date_from: string | null;
@@ -19,6 +19,12 @@ declare namespace App.Data.Dashboard {
         total_logs: number;
         active_employees: number | null;
         total_employees: number | null;
+    };
+    export type DashboardUploadStatsData = {
+        total: number;
+        this_month: number;
+        mine_total: number;
+        mine_this_month: number;
     };
 }
 declare namespace App.Data.DigitalEvidence {
@@ -112,6 +118,12 @@ declare namespace App.Data.WorkLocation {
         created_at: string | null;
         updated_at: string | null;
     };
+}
+declare namespace App.Services.Evidence {
+    export enum EvidenceType {
+        Digital = 'digital',
+        Social = 'social',
+    }
 }
 declare namespace App.Support {
     export enum RoleEnum {
