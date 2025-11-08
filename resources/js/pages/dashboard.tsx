@@ -1,6 +1,6 @@
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -173,16 +173,16 @@ export default function Dashboard({ overview }: DashboardProps) {
                     <p className='mt-2 text-sm text-muted-foreground'>{overview.description}</p>
                 </section>
 
-                <div className='grid gap-4 lg:grid-cols-2'>
+                {/* <div className='grid gap-4 lg:grid-cols-2'>
                     <UploadSummary label='Bukti Digital' stats={overview.digital} />
                     <UploadSummary label='Bukti Medsos' stats={overview.social} />
-                </div>
+                </div> */}
 
                 <Card>
-                    <CardHeader>
+                    {/* <CardHeader>
                         <CardTitle>Unggah Bukti</CardTitle>
-                        <CardDescription>Pilih jenis bukti dan unggah ke Google Drive dengan cepat.</CardDescription>
-                    </CardHeader>
+                        <CardDescription>Pilih jenis evidence dan unggah ke Google Drive dengan cepat.</CardDescription>
+                    </CardHeader> */}
                     <CardContent className='space-y-6'>
                         {disableUpload && (
                             <p className='rounded-md border border-dashed border-amber-500 bg-amber-50/80 p-3 text-sm text-amber-700'>
@@ -204,7 +204,7 @@ export default function Dashboard({ overview }: DashboardProps) {
                                         <h3 className='text-base font-semibold text-foreground'>Bukti Digital</h3>
                                         <p className='text-sm text-muted-foreground'>Unggah bukti digital dengan format JPG, JPEG, PNG, atau WEBP.</p>
                                     </div>
-                                    <Label htmlFor='digital-name'>Nama Bukti (opsional)</Label>
+                                    {/* <Label htmlFor='digital-name'>Nama Bukti (opsional)</Label>
                                     <Input
                                         id='digital-name'
                                         name='digital_name'
@@ -216,11 +216,14 @@ export default function Dashboard({ overview }: DashboardProps) {
                                         }}
                                         disabled={uploadForm.processing || disableUpload}
                                     />
-                                    <InputError message={uploadForm.errors.digital_name} />
+                                    <InputError message={uploadForm.errors.digital_name} /> */}
                                 </div>
                                 <div className='space-y-2'>
-                                    <Label htmlFor='digital-file'>Pilih Berkas Digital</Label>
+                                    <Label htmlFor='digital-file' className={buttonVariants()}>
+                                        Pilih Berkas Digital
+                                    </Label>
                                     <Input
+                                        className='hidden'
                                         key={`digital-${fileKey}`}
                                         id='digital-file'
                                         name='digital_files'
@@ -245,7 +248,7 @@ export default function Dashboard({ overview }: DashboardProps) {
                                         <h3 className='text-base font-semibold text-foreground'>Bukti Medsos</h3>
                                         <p className='text-sm text-muted-foreground'>Unggah bukti medsos dengan format JPG, JPEG, PNG, atau WEBP.</p>
                                     </div>
-                                    <Label htmlFor='social-name'>Nama Bukti (opsional)</Label>
+                                    {/* <Label htmlFor='social-name'>Nama Bukti (opsional)</Label>
                                     <Input
                                         id='social-name'
                                         name='social_name'
@@ -257,11 +260,14 @@ export default function Dashboard({ overview }: DashboardProps) {
                                         }}
                                         disabled={uploadForm.processing || disableUpload}
                                     />
-                                    <InputError message={uploadForm.errors.social_name} />
+                                    <InputError message={uploadForm.errors.social_name} /> */}
                                 </div>
                                 <div className='space-y-2'>
-                                    <Label htmlFor='social-file'>Pilih Berkas Medsos</Label>
+                                    <Label htmlFor='social-file' className={buttonVariants()}>
+                                        Pilih Berkas Medsos
+                                    </Label>
                                     <Input
+                                        className='hidden'
                                         key={`social-${fileKey}`}
                                         id='social-file'
                                         name='social_files'

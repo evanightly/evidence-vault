@@ -61,7 +61,7 @@ class DashboardController extends Controller {
 
         $greetingName = $firstName ?: 'Tim';
         $greeting = sprintf('Selamat datang, %s!', $greetingName);
-        $description = 'Unggah bukti digital dan medsos langsung dari dasbor.';
+        $description = 'Unggah evidence digital dan medsos langsung dari dasbor.';
 
         $overview = new DashboardData(
             greeting: $greeting,

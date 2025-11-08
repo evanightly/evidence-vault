@@ -82,22 +82,6 @@ export default function Login({ status, canResetPassword, canRegister }: LoginPr
                             </div>
 
                             <Button
-                                type='button'
-                                variant='outline'
-                                className='mt-2 h-11 w-full border-2 text-base font-semibold transition-all hover:border-primary hover:bg-primary/5'
-                                tabIndex={4}
-                                asChild
-                            >
-                                <a
-                                    href='https://drive.google.com/drive/u/7/folders/1h8QsYe_XF1MNRsJQeEp7wIC26cMxUAJX'
-                                    target='_blank'
-                                    rel='noopener noreferrer'
-                                >
-                                    Lihat Laporan
-                                </a>
-                            </Button>
-
-                            <Button
                                 type='submit'
                                 className='h-11 w-full text-base font-semibold shadow-lg shadow-primary/20 transition-all hover:shadow-xl hover:shadow-primary/30'
                                 tabIndex={5}
