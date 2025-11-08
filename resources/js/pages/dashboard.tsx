@@ -10,7 +10,8 @@ import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
 import { Head, useForm, usePage } from '@inertiajs/react';
-import { useEffect, useState, type FormEvent } from 'react';
+import { X } from 'lucide-react';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
 
 type DashboardOverview = App.Data.Dashboard.DashboardData;
 type DashboardUploadStats = App.Data.Dashboard.DashboardUploadStatsData;
@@ -26,6 +27,13 @@ type UploadResultItem = {
     employee_name: string;
     month_label: string;
     type_label: string;
+};
+
+type PreviewItem = {
+    id: string;
+    url: string;
+    name: string;
+    size: number;
 };
 
 interface DashboardProps {
@@ -54,6 +62,18 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 const formatNumber = (value: number): string => new Intl.NumberFormat('id-ID').format(value);
+
+const formatFileSize = (bytes: number): string => {
+    if (bytes >= 1024 * 1024) {
+        return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    }
+
+    if (bytes >= 1024) {
+        return `${(bytes / 1024).toFixed(1)} KB`;
+    }
+
+    return `${bytes} B`;
+};
 
 const UploadSummary = ({ label, stats }: { label: string; stats: DashboardUploadStats }) => (
     <Card>
@@ -88,7 +108,14 @@ export default function Dashboard({ overview }: DashboardProps) {
     const page = usePage<SharedPageProps>();
     const flash = page.props.flash;
 
-    const [fileKey, setFileKey] = useState(0);
+    const [fileKeys, setFileKeys] = useState<Record<FileField, number>>({
+        digital_files: 0,
+        social_files: 0,
+    });
+    const [filePreviews, setFilePreviews] = useState<Record<FileField, PreviewItem[]>>({
+        digital_files: [],
+        social_files: [],
+    });
     const [recentUploads, setRecentUploads] = useState<UploadResultItem[]>([]);
 
     type UploadFormState = { digital_name: string; digital_files: File[]; social_name: string; social_files: File[] };
@@ -124,6 +151,79 @@ export default function Dashboard({ overview }: DashboardProps) {
         uploadForm.clearErrors(field, ...(prefixedKeys as Array<`${FileField}.${number}`>));
     };
 
+    const resetFileInput = useCallback((field: FileField) => {
+        setFileKeys((previous) => ({ ...previous, [field]: previous[field] + 1 }));
+    }, []);
+
+    const resetAllFileInputs = useCallback(() => {
+        setFileKeys((previous) => ({
+            digital_files: previous.digital_files + 1,
+            social_files: previous.social_files + 1,
+        }));
+    }, []);
+
+    const updateFileSelection = (field: FileField, files: File[]) => {
+        filePreviews[field].forEach((item) => URL.revokeObjectURL(item.url));
+
+        const nextPreviews = files.map((file, index) => ({
+            id: `${field}-${file.name}-${file.lastModified}-${index}`,
+            url: URL.createObjectURL(file),
+            name: file.name,
+            size: file.size,
+        }));
+
+        setFilePreviews((current) => ({ ...current, [field]: nextPreviews }));
+        uploadForm.setData(field, files);
+        clearFileErrors(field);
+
+        const counterpart: FileField = field === 'digital_files' ? 'social_files' : 'digital_files';
+        clearFileErrors(counterpart);
+
+        resetFileInput(field);
+    };
+
+    const handleRemoveFile = (field: FileField, id: string) => {
+        const fieldPreviews = filePreviews[field];
+        const targetIndex = fieldPreviews.findIndex((item) => item.id === id);
+
+        if (targetIndex === -1) {
+            return;
+        }
+
+        URL.revokeObjectURL(fieldPreviews[targetIndex].url);
+
+        const updatedPreviews = fieldPreviews.filter((item) => item.id !== id);
+        setFilePreviews((current) => ({ ...current, [field]: updatedPreviews }));
+
+        const updatedFiles = uploadForm.data[field].filter((_, index) => index !== targetIndex);
+        uploadForm.setData(field, updatedFiles);
+        clearFileErrors(field);
+        resetFileInput(field);
+    };
+
+    const clearFileSelections = useCallback(() => {
+        setFilePreviews((current) => {
+            (Object.values(current) as PreviewItem[][]).forEach((items) => {
+                items.forEach((item) => URL.revokeObjectURL(item.url));
+            });
+
+            return {
+                digital_files: [],
+                social_files: [],
+            };
+        });
+
+        resetAllFileInputs();
+    }, [resetAllFileInputs]);
+
+    useEffect(() => {
+        return () => {
+            (Object.values(filePreviews) as PreviewItem[][]).forEach((items) => {
+                items.forEach((item) => URL.revokeObjectURL(item.url));
+            });
+        };
+    }, [filePreviews]);
+
     useEffect(() => {
         const handleCompleted = (event: Event) => {
             const detail = (event as CustomEvent<UploadResultItem>).detail;
@@ -139,7 +239,7 @@ export default function Dashboard({ overview }: DashboardProps) {
             });
             uploadForm.reset();
             uploadForm.clearErrors();
-            setFileKey((previous) => previous + 1);
+            clearFileSelections();
         };
 
         window.addEventListener('evidence-upload:completed', handleCompleted as EventListener);
@@ -147,7 +247,7 @@ export default function Dashboard({ overview }: DashboardProps) {
         return () => {
             window.removeEventListener('evidence-upload:completed', handleCompleted as EventListener);
         };
-    }, [uploadForm]);
+    }, [clearFileSelections, uploadForm]);
 
     const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -166,7 +266,7 @@ export default function Dashboard({ overview }: DashboardProps) {
             onSuccess: () => {
                 uploadForm.reset();
                 uploadForm.clearErrors();
-                setFileKey((previous) => previous + 1);
+                clearFileSelections();
             },
         });
     };
@@ -233,7 +333,7 @@ export default function Dashboard({ overview }: DashboardProps) {
                                     </Label>
                                     <Input
                                         className='hidden'
-                                        key={`digital-${fileKey}`}
+                                        key={`digital-${fileKeys.digital_files}`}
                                         id='digital-file'
                                         name='digital_files'
                                         type='file'
@@ -241,13 +341,44 @@ export default function Dashboard({ overview }: DashboardProps) {
                                         multiple
                                         onChange={(event) => {
                                             const files = Array.from(event.currentTarget.files ?? []);
-                                            uploadForm.setData('digital_files', files);
-                                            clearFileErrors('digital_files');
-                                            clearFileErrors('social_files');
+                                            updateFileSelection('digital_files', files);
                                         }}
                                         disabled={uploadForm.processing || disableUpload}
                                     />
                                     <InputError message={getFieldError('digital_files')} />
+                                    {filePreviews.digital_files.length > 0 && (
+                                        <div className='space-y-2'>
+                                            <p className='text-sm font-medium text-foreground'>Pratinjau Bukti Digital</p>
+                                            <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-3'>
+                                                {filePreviews.digital_files.map((item) => (
+                                                    <div
+                                                        key={item.id}
+                                                        className='group relative overflow-hidden rounded-lg border bg-background shadow-sm'
+                                                    >
+                                                        <img
+                                                            src={item.url}
+                                                            alt={`Pratinjau bukti digital ${item.name}`}
+                                                            className='h-40 w-full object-cover'
+                                                        />
+                                                        <Button
+                                                            type='button'
+                                                            variant='secondary'
+                                                            size='icon-sm'
+                                                            className='absolute top-2 right-2 rounded-full bg-background/90 text-foreground shadow-sm transition hover:bg-background'
+                                                            onClick={() => handleRemoveFile('digital_files', item.id)}
+                                                        >
+                                                            <X className='h-4 w-4' />
+                                                            <span className='sr-only'>Hapus bukti digital</span>
+                                                        </Button>
+                                                        <div className='border-t bg-muted/60 p-3 text-xs'>
+                                                            <p className='truncate font-medium text-foreground'>{item.name}</p>
+                                                            <p className='text-muted-foreground'>{formatFileSize(item.size)}</p>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -277,7 +408,7 @@ export default function Dashboard({ overview }: DashboardProps) {
                                     </Label>
                                     <Input
                                         className='hidden'
-                                        key={`social-${fileKey}`}
+                                        key={`social-${fileKeys.social_files}`}
                                         id='social-file'
                                         name='social_files'
                                         type='file'
@@ -285,13 +416,44 @@ export default function Dashboard({ overview }: DashboardProps) {
                                         multiple
                                         onChange={(event) => {
                                             const files = Array.from(event.currentTarget.files ?? []);
-                                            uploadForm.setData('social_files', files);
-                                            clearFileErrors('social_files');
-                                            clearFileErrors('digital_files');
+                                            updateFileSelection('social_files', files);
                                         }}
                                         disabled={uploadForm.processing || disableUpload}
                                     />
                                     <InputError message={getFieldError('social_files')} />
+                                    {filePreviews.social_files.length > 0 && (
+                                        <div className='space-y-2'>
+                                            <p className='text-sm font-medium text-foreground'>Pratinjau Bukti Medsos</p>
+                                            <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-3'>
+                                                {filePreviews.social_files.map((item) => (
+                                                    <div
+                                                        key={item.id}
+                                                        className='group relative overflow-hidden rounded-lg border bg-background shadow-sm'
+                                                    >
+                                                        <img
+                                                            src={item.url}
+                                                            alt={`Pratinjau bukti medsos ${item.name}`}
+                                                            className='h-40 w-full object-cover'
+                                                        />
+                                                        <Button
+                                                            type='button'
+                                                            variant='secondary'
+                                                            size='icon-sm'
+                                                            className='absolute top-2 right-2 rounded-full bg-background/90 text-foreground shadow-sm transition hover:bg-background'
+                                                            onClick={() => handleRemoveFile('social_files', item.id)}
+                                                        >
+                                                            <X className='h-4 w-4' />
+                                                            <span className='sr-only'>Hapus bukti medsos</span>
+                                                        </Button>
+                                                        <div className='border-t bg-muted/60 p-3 text-xs'>
+                                                            <p className='truncate font-medium text-foreground'>{item.name}</p>
+                                                            <p className='text-muted-foreground'>{formatFileSize(item.size)}</p>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 

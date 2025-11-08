@@ -1,6 +1,4 @@
-import LogbookController from '@/actions/App/Http/Controllers/LogbookController';
 import UserController from '@/actions/App/Http/Controllers/UserController';
-import WorkLocationController from '@/actions/App/Http/Controllers/WorkLocationController';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Icon } from '@/components/icon';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -16,7 +14,7 @@ import { dashboard } from '@/routes';
 import { type BreadcrumbItem, type NavItem, type SharedData } from '@/types';
 import { RoleEnum } from '@/types/enums.generated';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Building, Folder, LayoutGrid, Menu, Search, User } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, Menu, Search, User } from 'lucide-react';
 import AppLogo from './app-logo';
 import AppLogoIcon from './app-logo-icon';
 
@@ -58,20 +56,13 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
         // },
     ];
 
-    // if (isSuperAdmin || isAdmin) {
-    //     mainNavItems.push(
-    //         {
-    //             title: 'Pengguna',
-    //             href: UserController.index(),
-    //             icon: User,
-    //         },
-    //         {
-    //             title: 'Lokasi Kerja',
-    //             href: WorkLocationController.index(),
-    //             icon: Building,
-    //         },
-    //     );
-    // }
+    if (isSuperAdmin || isAdmin) {
+        mainNavItems.push({
+            title: 'Pengguna',
+            href: UserController.index(),
+            icon: User,
+        });
+    }
 
     return (
         <>
