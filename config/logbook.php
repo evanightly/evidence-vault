@@ -16,5 +16,6 @@ return [
         'shared_drive_id' => env('LOGBOOK_DRIVE_SHARED_DRIVE_ID'),
         'root_folder_name' => env('LOGBOOK_DRIVE_ROOT_FOLDER', 'RRI'),
         'application_name' => env('LOGBOOK_DRIVE_APP_NAME', 'Log-It Logbook Publisher'),
+        'env_path' => env('LOGBOOK_DRIVE_ENV_PATH'),
     ],
 ];

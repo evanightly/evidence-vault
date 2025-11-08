@@ -10,6 +10,13 @@ use Illuminate\Support\Str;
 use RuntimeException;
 
 class EvidenceDriveUploader {
+    private const QUARTER_MONTH_NAMES = [
+        1 => ['Januari', 'Februari', 'Maret'],
+        2 => ['April', 'Mei', 'Juni'],
+        3 => ['Juli', 'Agustus', 'September'],
+        4 => ['Oktober', 'November', 'Desember'],
+    ];
+
     public function __construct(
         private readonly DriveClient $driveClient,
     ) {}
@@ -21,15 +28,15 @@ class EvidenceDriveUploader {
 
         $now = Carbon::now();
         $monthLabel = $now->copy()->locale('id')->translatedFormat('F Y');
+        $quarterSegment = $this->resolveQuarterSegment($now);
 
         $employeeName = $this->driveClient->sanitiseFolderSegment($user->name ?? 'Tanpa Nama');
-        $monthSegment = $this->driveClient->sanitiseFolderSegment($monthLabel);
 
         $segments = [
             'Evidence',
+            $quarterSegment,
             $employeeName,
             $type->folderSegment(),
-            $monthSegment,
         ];
 
         $folder = $this->driveClient->ensureFolderPath($segments);
@@ -87,5 +94,15 @@ class EvidenceDriveUploader {
         return $extension !== ''
             ? sprintf('%s.%s', $fileBaseWithTimestamp, $extension)
             : $fileBaseWithTimestamp;
+    }
+
+    private function resolveQuarterSegment(Carbon $date): string {
+        $quarter = max(1, min(4, $date->quarter));
+        $months = self::QUARTER_MONTH_NAMES[$quarter] ?? [];
+        $monthList = implode(' ', $months);
+
+        $label = sprintf('Triwulan %d - %d (%s)', $quarter, $date->year, $monthList);
+
+        return $this->driveClient->sanitiseFolderSegment($label);
     }
 }

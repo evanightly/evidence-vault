@@ -71,6 +71,19 @@ important: Use Indonesian language for creating user interface text (labels, but
     - Tautan Bukti Medsos Desember 2025
         - https//:drive.com/oijo21jeo21jas
 
+9. Rev Drive Structure
+[monthly quarters] - [year]
+triwulan 1 - 2025 (januari februari maret)
+  - [Nama Pegawai]
+  - Eka - (returned link after upload complete)
+    - Digital
+      - images*
+    - Medsos
+      - images*
+triwulan 2 - 2025 (april mei juni)
+triwulan 3 - 2025 (juli agustus sept)
+triwulan 4 - 2025 (oktober november desember)
+
 ## Dev note
 
 1. Add progress indicator when pushing logbook to google drive
