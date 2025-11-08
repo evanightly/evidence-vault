@@ -117,8 +117,47 @@ export default function UserIndex({ users, filters = null, sort = null, filtered
                 enableFiltering: false,
             },
             {
+                id: 'digital_evidence_count',
+                accessorKey: 'digital_evidence_count',
+                header: 'Bukti Digital',
+                cell: ({ getValue }) => {
+                    const value = getValue();
+                    const numeric = typeof value === 'number' ? value : Number(value ?? 0);
+
+                    return Number.isFinite(numeric) ? numeric.toLocaleString('id-ID') : '0';
+                },
+                enableSorting: true,
+                enableFiltering: false,
+            },
+            {
+                id: 'social_media_evidence_count',
+                accessorKey: 'social_media_evidence_count',
+                header: 'Bukti Medsos',
+                cell: ({ getValue }) => {
+                    const value = getValue();
+                    const numeric = typeof value === 'number' ? value : Number(value ?? 0);
+
+                    return Number.isFinite(numeric) ? numeric.toLocaleString('id-ID') : '0';
+                },
+                enableSorting: true,
+                enableFiltering: false,
+            },
+            {
+                id: 'total_evidence_count',
+                accessorKey: 'total_evidence_count',
+                header: 'Total Bukti',
+                cell: ({ getValue }) => {
+                    const value = getValue();
+                    const numeric = typeof value === 'number' ? value : Number(value ?? 0);
+
+                    return Number.isFinite(numeric) ? numeric.toLocaleString('id-ID') : '0';
+                },
+                enableSorting: false,
+                enableFiltering: false,
+            },
+            {
                 id: 'created_at',
-                accessorKey: 'created_at',
+                accessorKey: 'formatted_created_at',
                 header: 'Dibuat',
                 cell: ({ getValue }) => {
                     const value = getValue();
@@ -134,7 +173,7 @@ export default function UserIndex({ users, filters = null, sort = null, filtered
             },
             {
                 id: 'updated_at',
-                accessorKey: 'updated_at',
+                accessorKey: 'formatted_updated_at',
                 header: 'Diperbarui',
                 cell: ({ getValue }) => {
                     const value = getValue();

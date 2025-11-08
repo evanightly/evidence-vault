@@ -23,7 +23,7 @@ class UserController extends BaseResourceController {
 
     protected string $modelClass = User::class;
     protected array $allowedFilters = ['created_at', 'email', 'name', 'role', 'search', 'updated_at', 'username'];
-    protected array $allowedSorts = ['created_at', 'email', 'id', 'name', 'role', 'updated_at', 'username'];
+    protected array $allowedSorts = ['created_at', 'digital_evidence_count', 'email', 'id', 'name', 'role', 'social_media_evidence_count', 'updated_at', 'username'];
     protected array $allowedIncludes = [];
     protected array $defaultIncludes = [];
     protected array $defaultSorts = ['-created_at'];
@@ -48,6 +48,10 @@ class UserController extends BaseResourceController {
         $query = $this->buildIndexQuery($request);
 
         $items = $query
+            ->withCount([
+                'digitalEvidences as digital_evidence_count',
+                'socialMediaEvidences as social_media_evidence_count',
+            ])
             ->paginate($request->input('per_page'))
             ->appends($request->query());
 

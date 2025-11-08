@@ -105,8 +105,13 @@ declare namespace App.Data.User {
         username: string | null;
         email: string | null;
         role: string | null;
+        digital_evidence_count: any | number;
+        social_media_evidence_count: any | number;
+        total_evidence_count: any | number;
         created_at: string | null;
         updated_at: string | null;
+        formatted_created_at: string | null;
+        formatted_updated_at: string | null;
     };
 }
 declare namespace App.Data.WorkLocation {
