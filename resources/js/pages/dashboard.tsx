@@ -18,9 +18,14 @@ type DashboardUploadStats = App.Data.Dashboard.DashboardUploadStatsData;
 type UploadResultItem = {
     type: string;
     title: string;
+    subtitle: string;
+    folder_id: string;
     folder_url: string;
     file_url: string;
     file_name: string;
+    employee_name: string;
+    month_label: string;
+    type_label: string;
 };
 
 interface DashboardProps {
@@ -127,7 +132,11 @@ export default function Dashboard({ overview }: DashboardProps) {
                 return;
             }
 
-            setRecentUploads((previous) => [detail, ...previous].slice(0, 6));
+            setRecentUploads((previous) => {
+                const filtered = previous.filter((item) => item.employee_name !== detail.employee_name || item.month_label !== detail.month_label);
+
+                return [detail, ...filtered].slice(0, 6);
+            });
             uploadForm.reset();
             uploadForm.clearErrors();
             setFileKey((previous) => previous + 1);
@@ -302,27 +311,22 @@ export default function Dashboard({ overview }: DashboardProps) {
                             <div className='space-y-3 rounded-md border bg-muted/40 p-4'>
                                 <div>
                                     <h4 className='text-sm font-semibold text-foreground'>Tautan Bukti Terbaru</h4>
-                                    <p className='text-xs text-muted-foreground'>Tautan akan muncul otomatis setelah unggahan selesai diproses.</p>
+                                    <p className='text-xs text-muted-foreground'>
+                                        Tautan folder karyawan akan muncul otomatis setelah unggahan selesai diproses.
+                                    </p>
                                 </div>
                                 <div className='space-y-3'>
                                     {recentUploads.map((item) => (
-                                        <div key={`${item.type}-${item.file_url}`} className='space-y-1'>
-                                            <p className='text-sm font-medium text-foreground'>{item.title}</p>
+                                        <div key={`${item.employee_name}-${item.month_label}`} className='space-y-1'>
+                                            <p className='text-sm font-semibold text-foreground'>{item.title}</p>
+                                            <p className='text-xs text-muted-foreground'>{item.subtitle}</p>
                                             <a
                                                 href={item.folder_url}
                                                 target='_blank'
                                                 rel='noreferrer'
                                                 className='text-sm font-medium text-primary underline-offset-2 hover:underline'
                                             >
-                                                Buka folder di Google Drive
-                                            </a>
-                                            <a
-                                                href={item.file_url}
-                                                target='_blank'
-                                                rel='noreferrer'
-                                                className='text-xs text-muted-foreground underline-offset-2 hover:underline'
-                                            >
-                                                Lihat berkas: {item.file_name}
+                                                Buka folder bukti {item.employee_name}
                                             </a>
                                         </div>
                                     ))}

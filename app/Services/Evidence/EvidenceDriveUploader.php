@@ -30,16 +30,17 @@ class EvidenceDriveUploader {
         $monthLabel = $now->copy()->locale('id')->translatedFormat('F Y');
         $quarterSegment = $this->resolveQuarterSegment($now);
 
-        $employeeName = $this->driveClient->sanitiseFolderSegment($user->name ?? 'Tanpa Nama');
+        $employeeDisplayName = $user->name ?: 'Tanpa Nama';
+        $employeeSegment = $this->driveClient->sanitiseFolderSegment($employeeDisplayName);
 
-        $segments = [
+        $employeeSegments = [
             'Evidence',
             $quarterSegment,
-            $employeeName,
-            $type->folderSegment(),
+            $employeeSegment,
         ];
 
-        $folder = $this->driveClient->ensureFolderPath($segments);
+        $employeeFolder = $this->driveClient->ensureFolderPath($employeeSegments, true);
+        $typeFolder = $this->driveClient->ensureChildFolder($employeeFolder->getId(), $type->folderSegment());
 
         $fileName = $this->buildFileName($file, $type, $customName, $now);
 
@@ -52,7 +53,7 @@ class EvidenceDriveUploader {
         $mimeType = $file->getMimeType() ?? 'application/octet-stream';
 
         $driveFile = $this->driveClient->uploadFile(
-            $folder->getId(),
+            $typeFolder->getId(),
             $fileName,
             $mimeType,
             $temporaryPath,
@@ -60,10 +61,15 @@ class EvidenceDriveUploader {
 
         $this->driveClient->setPubliclyReadable($driveFile->getId());
 
+        $folderId = (string) $employeeFolder->getId();
+        $folderUrl = sprintf('https://drive.google.com/drive/folders/%s', $folderId);
+
         return new EvidenceDriveUploadResult(
             type: $type,
             month_label: $monthLabel,
-            folder_url: (string) $folder->getWebViewLink(),
+            employee_name: $employeeDisplayName,
+            folder_id: $folderId,
+            folder_url: $folderUrl,
             file_url: (string) $driveFile->getWebViewLink(),
             file_name: $fileName,
         );

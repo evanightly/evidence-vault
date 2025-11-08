@@ -24,21 +24,32 @@ test('uploader stores evidence using quarter-based folder structure', function (
     $driveClient->shouldReceive('sanitiseFolderSegment')
         ->with('Triwulan 4 - 2025 (Oktober November Desember)')
         ->andReturn('Triwulan 4 - 2025 Oktober November Desember');
+    $employeeFolder = new DriveFile([
+        'id' => 'folder-456',
+        'webViewLink' => 'https://drive.test/employee-folder',
+    ]);
+    $typeFolder = new DriveFile([
+        'id' => 'folder-123',
+        'webViewLink' => 'https://drive.test/type-folder',
+    ]);
+
     $driveClient->shouldReceive('ensureFolderPath')
         ->once()
-        ->with(\Mockery::on(function (array $segments) {
-            expect($segments)->toHaveCount(4);
+        ->withArgs(function (array $segments, bool $makePublic) {
+            expect($segments)->toHaveCount(3);
             expect($segments[0])->toBe('Evidence');
             expect($segments[1])->toBe('Triwulan 4 - 2025 Oktober November Desember');
             expect($segments[2])->toBe('Eka Putri');
-            expect($segments[3])->toBe('Digital');
+            expect($makePublic)->toBeTrue();
 
             return true;
-        }))
-        ->andReturn(new DriveFile([
-            'id' => 'folder-123',
-            'webViewLink' => 'https://drive.test/folder',
-        ]));
+        })
+        ->andReturn($employeeFolder);
+
+    $driveClient->shouldReceive('ensureChildFolder')
+        ->once()
+        ->with('folder-456', 'Digital')
+        ->andReturn($typeFolder);
     $driveClient->shouldReceive('uploadFile')
         ->once()
         ->with('folder-123', \Mockery::type('string'), 'image/png', \Mockery::type('string'))
@@ -54,7 +65,9 @@ test('uploader stores evidence using quarter-based folder structure', function (
     $result = $uploader->upload($user, $file, EvidenceType::Digital);
 
     expect($result->month_label)->toBe('Desember 2025');
-    expect($result->folder_url)->toBe('https://drive.test/folder');
+    expect($result->employee_name)->toBe('Eka Putri');
+    expect($result->folder_id)->toBe('folder-456');
+    expect($result->folder_url)->toBe('https://drive.google.com/drive/folders/folder-456');
     expect($result->file_url)->toBe('https://drive.test/file');
 
     Carbon::setTestNow();

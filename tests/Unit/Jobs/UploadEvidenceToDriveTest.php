@@ -29,7 +29,9 @@ test('job uploads evidence, stores record, and broadcasts completion', function 
     $result = new EvidenceDriveUploadResult(
         type: EvidenceType::Digital,
         month_label: 'Desember 2025',
-        folder_url: 'https://drive.test/folder',
+        employee_name: 'Eka Putri',
+        folder_id: 'folder-456',
+        folder_url: 'https://drive.google.com/drive/folders/folder-456',
         file_url: 'https://drive.test/file',
         file_name: 'queued-evidence-20251201080000.png',
     );
@@ -70,7 +72,10 @@ test('job uploads evidence, stores record, and broadcasts completion', function 
 
         return is_array($results)
             && count($results) === 1
-            && ($results[0]['file_url'] ?? null) === 'https://drive.test/file';
+            && ($results[0]['file_url'] ?? null) === 'https://drive.test/file'
+            && ($results[0]['folder_id'] ?? null) === 'folder-456'
+            && ($results[0]['folder_url'] ?? null) === 'https://drive.google.com/drive/folders/folder-456'
+            && ($results[0]['employee_name'] ?? null) === 'Eka Putri';
     });
 
     expect(Storage::disk('local')->exists($storedPath))->toBeFalse();

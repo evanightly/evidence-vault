@@ -97,7 +97,10 @@ class UploadEvidenceToDrive implements ShouldQueue {
 
                     $this->persistResult($result->file_url, $result->file_name, $user->getKey(), $displayName);
 
-                    $results[] = $result->toFlashPayload();
+                    $resultPayload = $result->toFlashPayload();
+                    $resultKey = Str::of($result->employee_name)->lower() . '|' . Str::of($result->month_label)->lower();
+
+                    $results[(string) $resultKey] = $resultPayload;
 
                     $this->broadcastProgress('progress', sprintf('Berkas %d dari %d selesai diunggah.', $index + 1, $totalFiles), $this->progressValue($index, $totalFiles, 'completed'));
                 } finally {
@@ -114,7 +117,7 @@ class UploadEvidenceToDrive implements ShouldQueue {
                 : $this->type->successMessage();
 
             $this->broadcastProgress('completed', $successMessage, 100, [
-                'results' => $results,
+                'results' => array_values($results),
             ]);
         } catch (Throwable $exception) {
             $this->broadcastProgress('failed', $this->type->failureMessage(), 100, [
